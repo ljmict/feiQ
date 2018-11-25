@@ -2,13 +2,64 @@ package recvdata
 
 import (
 	"feiQ/config"
+	"feiQ/senddata"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io/ioutil"
+	"strconv"
+	"strings"
 )
 
+//处理接收到的数据
+func dealFeiQData(buf []byte, dataLen int) map[string]string {
+	strData := string(buf[:dataLen])
+	strSlice := strings.Split(strData, ":")
+
+	feiQData := map[string]string{}
+	feiQData["feiQVersion"] = strSlice[0]
+	feiQData["packetID"] = strSlice[1]
+	feiQData["userName"] = strSlice[2]
+	feiQData["hostName"] = strSlice[3]
+	feiQData["commandStr"] = strSlice[4]
+
+	reader := transform.NewReader(strings.NewReader(strSlice[5]), simplifiedchinese.GBK.NewDecoder())
+	byteData, _ := ioutil.ReadAll(reader)
+	feiQData["option"] = string(byteData)
+	return feiQData
+}
+
+//处理命令选项
+func dealCommandOptionNum(commandStr string) (int, int) {
+	//提取命令字中的命令及选项
+	commandNum, _ := strconv.Atoi(commandStr)
+	command := commandNum & 0x000000ff
+	commandOption := commandNum & 0xffffff00
+	return command, commandOption
+}
+
+//接收数据
 func RecvMsg() {
 	for {
-		buf := make([] byte, 1024)
-		dataLen, _ := config.UDPSocket.Read(buf)
-		fmt.Printf("收到消息：%s\n", string(buf[:dataLen]))
+		buf := make([]byte, 1024)
+		dataLen, addr, _ := config.UDPSocket.ReadFromUDP(buf)
+		feiQData := dealFeiQData(buf, dataLen)
+		command, _ := dealCommandOptionNum(feiQData["commandStr"])
+		if command == config.IPMSGBrEntry {
+			//有用户上线
+			fmt.Printf("%s上线\n", feiQData["option"])
+		} else if command == config.IPMSGBrEXIT {
+			//有用户下线
+			fmt.Printf("%s下线\n", feiQData["userName"])
+		} else if command == config.IPMSGAnsentry {
+			//对方通告在线
+			fmt.Printf("%s在线\n", feiQData["userName"])
+		} else if command == config.IPMSGSendMsg {
+			//接收到消息
+			fmt.Printf("%s：%s\n", feiQData["userName"], feiQData["option"])
+			//给对方发送消息确认
+			msg := senddata.BuildMsg(config.IPMSGRecvMsg, "")
+			senddata.SendMsg(msg, addr)
+		}
 	}
 }
