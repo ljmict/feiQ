@@ -3,10 +3,9 @@ package main
 import (
 	"feiQ/config"
 	"feiQ/recvdata"
+	"feiQ/senddata"
 	"fmt"
 	"net"
-	"strconv"
-	"time"
 )
 
 func CreateUDPSocket() {
@@ -15,62 +14,6 @@ func CreateUDPSocket() {
 	//创建udp套接字
 	config.UDPSocket, _ = net.ListenUDP("udp", addr)
 }
-
-
-//组装飞鸽传书的数据包
-func BuildMsg(command int, optionData string) string {
-	msg := config.FeiQVersion + ":" + strconv.FormatInt(time.Now().Unix(), 10) +
-		":" + config.FeiQUserName + ":" + config.FeiQHostName + ":" + strconv.Itoa(command) + ":" + optionData
-	return msg
-}
-
-
-//发送消息
-func SendMsg(msg string, BroadCastIP *net.UDPAddr) {
-	config.UDPSocket.WriteToUDP([] byte(msg), BroadCastIP)
-}
-
-
-//发送上线广播消息
-func SendBroadcastOnline() {
-	msg := BuildMsg(config.IPMSGBrEntry, config.FeiQUserName)
-
-	BroadCastIP := net.UDPAddr{
-		IP:   net.IPv4(10, 211, 55, 255),
-		Port: 2425,
-	}
-	SendMsg(msg, &BroadCastIP)
-}
-
-
-//发送下线广播消息
-func SendBroadcastOffline() {
-	msg := BuildMsg(config.IPMSGBrEXIT, config.FeiQUserName)
-
-	BroadCastIP := net.UDPAddr{
-		IP:   net.IPv4(10, 211, 55, 255),
-		Port: 2425,
-	}
-	SendMsg(msg, &BroadCastIP)
-}
-
-
-//向指定ip发送消息
-func SendDestIpMsg() {
-	var DestIpMsg, SendData string
-	fmt.Print("请输入目标IP：")
-	fmt.Scanf("%s", &DestIpMsg)
-	fmt.Print("发送消息：")
-	fmt.Scanf("%s", &SendData)
-
-	DestIp, _ := net.ResolveUDPAddr("udp", DestIpMsg+":"+"2425")
-	//如果DestIpMsg和SendData都有内容才能发送数据
-	if DestIpMsg != "" && SendData != "" {
-		msg := BuildMsg(config.IPMSGSendMsg, SendData)
-		SendMsg(msg, DestIp)
-	}
-}
-
 
 //命令菜单
 func CommandMenu() int {
@@ -99,16 +42,16 @@ func main() {
 		CommandNum := CommandMenu()
 		if CommandNum == 1 {
 			//发送广播上线消息
-			SendBroadcastOnline()
+			senddata.SendBroadcastOnline()
 		} else if CommandNum == 2 {
 			//发送广播下线消息
-			SendBroadcastOffline()
+			senddata.SendBroadcastOffline()
 		} else if CommandNum == 3 {
 			//发送消息
-			SendDestIpMsg()
+			senddata.SendDestIpMsg()
 		} else if CommandNum == 0 {
 			//先发送下线消息，再退出程序
-			SendBroadcastOffline()
+			senddata.SendBroadcastOffline()
 			break
 		}
 	}
