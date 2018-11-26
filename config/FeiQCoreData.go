@@ -14,7 +14,9 @@ const (
 	IPMSGBrEXIT  = 0x00000002 //下线提醒消息命令
 	IPMSGSendMsg = 0x00000020 //表示发送消息
 	IPMSGAnsentry = 0x00000003 //对方也在线
-	IPMSGRecvMsg = 0x00000021
+	IPMSGRecvMsg = 0x00000021 //确认收到消息
+	IPMSGFileAttachOpt = 0x00200000
+	IPMSGFileRegular = 0x00000001 //普通文件
 )
 
 //保存在线用户列表

@@ -38,6 +38,33 @@ func dealCommandOptionNum(commandStr string) (int, int) {
 	return command, commandOption
 }
 
+//添加在线用户
+func addOnlineUser(userName, hostName string, destIP string) {
+	//判断用户是否已经存在UserSlice中，如果没有则添加
+	for _, user := range config.UserSlice {
+		if user["ip"] == destIP {
+			return
+		}
+	}
+	newOnlineUser := map[string]string{}
+	newOnlineUser["ip"] = destIP
+	newOnlineUser["userName"] = userName
+	newOnlineUser["hostName"] = hostName
+	config.UserSlice = append(config.UserSlice, newOnlineUser)
+}
+
+//删除下线用户
+func delOfflineUser(IP string) {
+	for index, user := range config.UserSlice {
+		if user["ip"] == IP {
+			start := config.UserSlice[:index]
+			end := config.UserSlice[index+1:]
+			config.UserSlice = append(start, end...)
+			break
+		}
+	}
+}
+
 //接收数据
 func RecvMsg() {
 	for {
@@ -48,12 +75,19 @@ func RecvMsg() {
 		if command == config.IPMSGBrEntry {
 			//有用户上线
 			fmt.Printf("%s上线\n", feiQData["option"])
+			addOnlineUser(feiQData["option"], feiQData["hostName"], addr.IP.String())
+
+			//通告对方我也在线
+			answerOnlineMsg := senddata.BuildMsg(config.IPMSGAnsentry, "")
+			senddata.SendMsg(answerOnlineMsg, addr)
 		} else if command == config.IPMSGBrEXIT {
 			//有用户下线
 			fmt.Printf("%s下线\n", feiQData["userName"])
+			delOfflineUser(addr.IP.String())
 		} else if command == config.IPMSGAnsentry {
 			//对方通告在线
 			fmt.Printf("%s在线\n", feiQData["userName"])
+			addOnlineUser(feiQData["option"], feiQData["hostName"], addr.IP.String())
 		} else if command == config.IPMSGSendMsg {
 			//接收到消息
 			fmt.Printf("%s：%s\n", feiQData["userName"], feiQData["option"])
