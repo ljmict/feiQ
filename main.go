@@ -22,6 +22,7 @@ func CommandMenu() int {
 	fmt.Println("1.发送上线广播")
 	fmt.Println("2.发送下线广播")
 	fmt.Println("3.发送消息")
+	fmt.Println("4.显示在线用户")
 	fmt.Println("0.退出程序")
 	fmt.Print("请输入数字：")
 	fmt.Scanf("%d", &CommandNum)
@@ -49,6 +50,9 @@ func main() {
 		} else if CommandNum == 3 {
 			//发送消息
 			senddata.SendDestIpMsg()
+		} else if CommandNum == 4 {
+			//显示所有在线用户
+			senddata.DisplayOnlineUser()
 		} else if CommandNum == 0 {
 			//先发送下线消息，再退出程序
 			senddata.SendBroadcastOffline()

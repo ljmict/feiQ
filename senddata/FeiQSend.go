@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+//显示所有在线用户
+func DisplayOnlineUser() {
+	for index, user := range config.UserSlice {
+		fmt.Printf("%d %s\n", index, user["userName"])
+	}
+}
+
 //组装飞鸽传书的数据包
 func BuildMsg(command int, optionData string) string {
 	msg := config.FeiQVersion + ":" + strconv.FormatInt(time.Now().Unix(), 10) +
@@ -29,7 +36,7 @@ func SendBroadcastOnline() {
 	msg := BuildMsg(config.IPMSGBrEntry, config.FeiQUserName)
 
 	BroadCastIP := net.UDPAddr{
-		IP:   net.IPv4(10, 211, 55, 255),
+		IP:   net.IPv4(255, 255, 255, 255),
 		Port: 2425,
 	}
 	SendMsg(msg, &BroadCastIP)
@@ -41,7 +48,7 @@ func SendBroadcastOffline() {
 	msg := BuildMsg(config.IPMSGBrEXIT, config.FeiQUserName)
 
 	BroadCastIP := net.UDPAddr{
-		IP:   net.IPv4(10, 211, 55, 255),
+		IP:   net.IPv4(255, 255, 255, 255),
 		Port: 2425,
 	}
 	SendMsg(msg, &BroadCastIP)
@@ -51,8 +58,15 @@ func SendBroadcastOffline() {
 //向指定ip发送消息
 func SendDestIpMsg() {
 	var destIpMsg string
-	fmt.Print("请输入目标IP：")
+	index := 0
+	fmt.Print("请输入目标IP（输入d显示在线用户）：")
 	fmt.Scanf("%s", &destIpMsg)
+	if destIpMsg == "d" {
+		DisplayOnlineUser()
+		fmt.Print("输入对应的序号选择你要发送的用户：")
+		fmt.Scanf("%d", &index)
+		destIpMsg = config.UserSlice[index]["ip"]
+	}
 	fmt.Print("发送消息：")
 	reader := bufio.NewReader(os.Stdin)
 	sendData, _, _ := reader.ReadLine()
