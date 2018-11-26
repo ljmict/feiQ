@@ -10,7 +10,7 @@ import (
 
 func CreateUDPSocket() {
 	//解析UDPAddr
-	addr, _ := net.ResolveUDPAddr("udp", "10.211.55.2:2425")
+	addr, _ := net.ResolveUDPAddr("udp", "0.0.0.0:2425")
 	//创建udp套接字
 	config.UDPSocket, _ = net.ListenUDP("udp", addr)
 }
